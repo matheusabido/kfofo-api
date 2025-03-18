@@ -20,3 +20,19 @@ func GetClaims(ctx *gin.Context) *middleware.JWTClaims {
 
 	return claims
 }
+
+func GetUser(ctx *gin.Context) *middleware.User {
+	userValue, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(500, gin.H{"error": "Internal server error"})
+		return nil
+	}
+
+	user, ok := userValue.(*middleware.User)
+	if !ok {
+		ctx.JSON(500, gin.H{"error": "Internal server error"})
+		return nil
+	}
+
+	return user
+}

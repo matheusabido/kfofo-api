@@ -1,16 +1,27 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/matheusabido/kfofo-api/db"
 )
 
 type JWTClaims struct {
 	Id int `json:"id"`
 	jwt.RegisteredClaims
+}
+
+type User struct {
+	Id        int
+	Name      string
+	Email     string
+	BirthDate time.Time
+	Password  string
 }
 
 func AuthMiddleware(ctx *gin.Context) {
@@ -40,6 +51,15 @@ func AuthMiddleware(ctx *gin.Context) {
 		return
 	}
 
+	var user User
+	err = db.Instance.QueryRow(context.Background(), "SELECT id, name, email, birth_date, password FROM users WHERE id = $1", claims.Id).Scan(&user.Id, &user.Name, &user.Email, &user.BirthDate, &user.Password)
+	if err != nil {
+		ctx.Abort()
+		ctx.JSON(401, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	ctx.Set("claims", claims)
+	ctx.Set("user", &user)
 	ctx.Next()
 }
