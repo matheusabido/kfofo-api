@@ -17,9 +17,8 @@ func AuthMiddleware(ctx *gin.Context) {
 	authorization := ctx.GetHeader("Authorization")
 
 	if len(authorization) < 7 || authorization[:7] != "Bearer " {
-		ctx.JSON(401, gin.H{
-			"error": "Unauthorized",
-		})
+		ctx.JSON(401, gin.H{"error": "Unauthorized"})
+		ctx.Abort()
 		return
 	}
 
@@ -27,6 +26,7 @@ func AuthMiddleware(ctx *gin.Context) {
 	claims := &JWTClaims{}
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			ctx.Abort()
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 
@@ -35,9 +35,8 @@ func AuthMiddleware(ctx *gin.Context) {
 	})
 
 	if err != nil {
-		ctx.JSON(401, gin.H{
-			"error": "Unauthorized",
-		})
+		ctx.Abort()
+		ctx.JSON(401, gin.H{"error": "Unauthorized"})
 		return
 	}
 
