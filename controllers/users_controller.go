@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -75,7 +76,6 @@ func PostUser(ctx *gin.Context) {
 		return
 	}
 
-	var id int
 	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	if err != nil {
 		fmt.Println(err)
@@ -85,6 +85,7 @@ func PostUser(ctx *gin.Context) {
 		return
 	}
 
+	var id int
 	err = db.Instance.QueryRow(context.Background(), "INSERT INTO users (name, email, birth_date, password) VALUES ($1, $2, $3, $4) RETURNING id", data.Name, data.Email, data.BirthDate, string(encryptedPassword)).Scan(&id)
 	if err != nil {
 		fmt.Println(err)
@@ -100,4 +101,105 @@ func PostUser(ctx *gin.Context) {
 		"email":      data.Email,
 		"birth_date": data.BirthDate,
 	})
+}
+
+type UpdateDTO struct {
+	Name      string `json:"name" validate:"omitempty,min=5"`
+	Email     string `json:"email" validate:"omitempty,email"`
+	BirthDate string `json:"birth_date" validate:"omitempty,datetime=2006-01-02"`
+	Password  string `json:"password" validate:"omitempty,min=8"`
+}
+
+func PutUser(ctx *gin.Context) {
+	var data UpdateDTO
+	idValue := ctx.Param("id")
+	id, err := strconv.Atoi(idValue)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "Invalid id"})
+		return
+	}
+
+	claims := utils.GetClaims(ctx)
+	if claims.Id != id {
+		ctx.JSON(403, gin.H{"error": "You can't edit this user's info."})
+		return
+	}
+
+	if !validator.BindAndValidate(ctx, &data) {
+		return
+	}
+
+	index := 1
+	var updates []string
+	var values []any
+	if len(data.Name) > 0 {
+		updates = append(updates, "name = $"+strconv.Itoa(index))
+		values = append(values, data.Name)
+		index++
+	}
+	if len(data.Email) > 0 {
+		updates = append(updates, "email = $"+strconv.Itoa(index))
+		values = append(values, data.Email)
+		index++
+	}
+	if len(data.BirthDate) > 0 {
+		updates = append(updates, "birth_date = $"+strconv.Itoa(index))
+		values = append(values, data.BirthDate)
+		index++
+	}
+	if len(data.Password) > 0 {
+		updates = append(updates, "password = $"+strconv.Itoa(index))
+		encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
+		if err != nil {
+			fmt.Println(err)
+			ctx.JSON(500, gin.H{"error": "Internal server error"})
+			return
+		}
+		values = append(values, string(encryptedPassword))
+		index++
+	}
+
+	if len(updates) == 0 {
+		ctx.JSON(200, gin.H{"message": "Data updated."})
+		return
+	}
+
+	var builder strings.Builder
+	builder.WriteString("UPDATE users SET ")
+	builder.WriteString(strings.Join(updates, ", "))
+	builder.WriteString(" WHERE id = $" + strconv.Itoa(index))
+	values = append(values, id)
+
+	_, err = db.Instance.Exec(context.Background(), builder.String(), values...)
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	ctx.JSON(200, gin.H{"message": "Data updated."})
+}
+
+func DeleteUser(ctx *gin.Context) {
+	idValue := ctx.Param("id")
+	id, err := strconv.Atoi(idValue)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "Invalid id"})
+		return
+	}
+
+	claims := utils.GetClaims(ctx)
+	if claims.Id != id {
+		ctx.JSON(403, gin.H{"error": "You can't delete this user's account."})
+		return
+	}
+
+	_, err = db.Instance.Exec(context.Background(), "DELETE FROM users WHERE id = $1", id)
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	ctx.JSON(200, gin.H{"message": "User deleted."})
 }
