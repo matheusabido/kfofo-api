@@ -13,13 +13,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type LoginDTO struct {
+type loginDTO struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
 
 func PostLogin(ctx *gin.Context) {
-	var data LoginDTO
+	var data loginDTO
 
 	if !validator.BindAndValidate(ctx, &data) {
 		return

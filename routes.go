@@ -20,6 +20,8 @@ func SetupRoutes() {
 	protected.PUT("/user/:id", controllers.PutUser)
 	protected.DELETE("/user/:id", controllers.DeleteUser)
 
+	protected.POST("/home", controllers.PostHome)
+
 	router.POST("/session", controllers.PostLogin)
 
 	router.Run()

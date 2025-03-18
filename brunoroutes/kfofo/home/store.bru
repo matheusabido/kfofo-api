@@ -1,0 +1,27 @@
+meta {
+  name: store
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/home
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZXhwIjoxNzQyMzQ0MTA4LCJpYXQiOjE3NDIzNDA1MDh9.TgOIUWyqRSwYxJPLIP-dlBO_Nwiu3qrNq-QDBcOyAu0
+}
+
+body:json {
+  {
+    "user_id": 1,
+    "address": "endereço 1",
+    "city": "cidade 1",
+    "description": "Casa top",
+    "cost_day": 10,
+    "restriction_id": 4,
+    "share_type_id": 1
+  }
+}

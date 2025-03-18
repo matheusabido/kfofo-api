@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type StoreDTO struct {
+type StoreUserDTO struct {
 	Name      string `json:"name" validate:"required,min=5"`
 	Email     string `json:"email" validate:"required,email"`
 	BirthDate string `json:"birth_date" validate:"required,datetime=2006-01-02"`
@@ -47,7 +47,7 @@ func GetUser(ctx *gin.Context) {
 }
 
 func PostUser(ctx *gin.Context) {
-	var data StoreDTO
+	var data StoreUserDTO
 
 	if !validator.BindAndValidate(ctx, &data) {
 		return
@@ -92,7 +92,7 @@ func PostUser(ctx *gin.Context) {
 	})
 }
 
-type UpdateDTO struct {
+type UpdateUserDTO struct {
 	Name      string `json:"name" validate:"omitempty,min=5"`
 	Email     string `json:"email" validate:"omitempty,email"`
 	BirthDate string `json:"birth_date" validate:"omitempty,datetime=2006-01-02"`
@@ -100,7 +100,7 @@ type UpdateDTO struct {
 }
 
 func PutUser(ctx *gin.Context) {
-	var data UpdateDTO
+	var data UpdateUserDTO
 	idValue := ctx.Param("id")
 	id, err := strconv.Atoi(idValue)
 	if err != nil {
