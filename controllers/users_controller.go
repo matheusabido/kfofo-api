@@ -3,11 +3,15 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/matheusabido/kfofo-api/db"
+	"github.com/matheusabido/kfofo-api/middleware"
 	"github.com/matheusabido/kfofo-api/utils"
 	"github.com/matheusabido/kfofo-api/validator"
 	"golang.org/x/crypto/bcrypt"
@@ -84,19 +88,38 @@ func PostUser(ctx *gin.Context) {
 		return
 	}
 
+	claims := middleware.JWTClaims{
+		Id: id,
+		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	sign := []byte(os.Getenv("JWT_SIGN"))
+	tokenString, err := token.SignedString(sign)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": "Internal server error"})
+		return
+	}
+
 	ctx.JSON(200, gin.H{
 		"id":         id,
 		"name":       data.Name,
 		"email":      data.Email,
 		"birth_date": data.BirthDate,
+		"token":      tokenString,
 	})
 }
 
 type UpdateUserDTO struct {
-	Name      string `json:"name" validate:"omitempty,min=5"`
-	Email     string `json:"email" validate:"omitempty,email"`
-	BirthDate string `json:"birth_date" validate:"omitempty,datetime=2006-01-02"`
-	Password  string `json:"password" validate:"omitempty,min=8"`
+	Name        string `json:"name" validate:"omitempty,min=5"`
+	Email       string `json:"email" validate:"omitempty,email"`
+	BirthDate   string `json:"birth_date" validate:"omitempty,datetime=2006-01-02"`
+	NewPassword string `json:"new_password" validate:"omitempty,min=8"`
+	Password    string `json:"password" validate:"required,min=8"`
 }
 
 func PutUser(ctx *gin.Context) {
@@ -108,13 +131,19 @@ func PutUser(ctx *gin.Context) {
 		return
 	}
 
-	claims := utils.GetClaims(ctx)
-	if claims.Id != id {
+	if !validator.BindAndValidate(ctx, &data) {
+		return
+	}
+
+	user := utils.GetUser(ctx)
+	if user.Id != id {
 		ctx.JSON(403, gin.H{"error": "You can't edit this user's info."})
 		return
 	}
 
-	if !validator.BindAndValidate(ctx, &data) {
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data.Password))
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "Invalid credentials."})
 		return
 	}
 
@@ -136,9 +165,9 @@ func PutUser(ctx *gin.Context) {
 		values = append(values, data.BirthDate)
 		index++
 	}
-	if len(data.Password) > 0 {
+	if len(data.NewPassword) > 0 {
 		updates = append(updates, "password = $"+strconv.Itoa(index))
-		encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
+		encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(data.NewPassword), bcrypt.DefaultCost)
 		if err != nil {
 			fmt.Println(err)
 			ctx.JSON(500, gin.H{"error": "Internal server error"})

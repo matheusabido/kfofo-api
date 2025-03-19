@@ -14,7 +14,7 @@ func SetupValidator() {
 func Bind(ctx *gin.Context, data any) bool {
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		ctx.JSON(400, gin.H{
-			"error": "Invalid payload",
+			"error": err.Error(),
 		})
 		return false
 	}
@@ -24,7 +24,7 @@ func Bind(ctx *gin.Context, data any) bool {
 func Validate(ctx *gin.Context, data interface{}) bool {
 	if err := validate.Struct(data); err != nil {
 		ctx.JSON(400, gin.H{
-			"error": "Invalid payload",
+			"error": err.Error(),
 		})
 		return false
 	}

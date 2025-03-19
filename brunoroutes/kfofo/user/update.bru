@@ -5,7 +5,17 @@ meta {
 }
 
 put {
-  url: http://localhost:8080/user/1
-  body: none
-  auth: none
+  url: http://localhost:8080/user/2
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZXhwIjoxNzQyNDAxNTIxLCJpYXQiOjE3NDIzOTc5MjF9.Whr-62dLCCcGa9wSr9HTw1cT4NaQAGBd7fQKW6JGCmA
+}
+
+body:json {
+  {
+    "password": "admin123"
+  }
 }

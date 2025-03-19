@@ -15,7 +15,7 @@ import (
 
 type loginDTO struct {
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 func PostLogin(ctx *gin.Context) {
@@ -26,9 +26,11 @@ func PostLogin(ctx *gin.Context) {
 	}
 
 	var id int
+	var name string
 	var email string
+	var birthDate time.Time
 	var password string
-	err := db.Instance.QueryRow(context.Background(), "SELECT id, email, password FROM users WHERE email = $1", data.Email).Scan(&id, &email, &password)
+	err := db.Instance.QueryRow(context.Background(), "SELECT id, name, email, birth_date, password FROM users WHERE email = $1", data.Email).Scan(&id, &name, &email, &birthDate, &password)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "Invalid credentials."})
 		return
@@ -58,7 +60,10 @@ func PostLogin(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, gin.H{
-		"id":    id,
-		"token": tokenString,
+		"id":         id,
+		"name":       name,
+		"email":      email,
+		"birth_date": birthDate.Format("2006-01-02"),
+		"token":      tokenString,
 	})
 }
