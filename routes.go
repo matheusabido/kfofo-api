@@ -10,6 +10,7 @@ import (
 
 func SetupRoutes() {
 	router := gin.Default()
+	router.MaxMultipartMemory = 2 * 1024 * 1024
 	validator.SetupValidator()
 
 	router.Use(createCors())
@@ -27,6 +28,8 @@ func SetupRoutes() {
 	protected.DELETE("/home/:id", controllers.DeleteHome)
 
 	router.POST("/session", controllers.PostLogin)
+
+	router.POST("/upload", controllers.PostImage)
 
 	router.Run()
 }
