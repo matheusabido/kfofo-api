@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -27,16 +28,16 @@ func GetImageExtension(file multipart.File) string {
 	return allowedTypes[contentType]
 }
 
-func CreateUploadRequest(fileHeader *multipart.FileHeader, path string) (*objectstorage.PutObjectRequest, error) {
+func UploadFile(fileHeader *multipart.FileHeader, path string) error {
 	file, err := fileHeader.Open()
 	if err != nil {
-		return nil, fmt.Errorf("could not open file: %v", err)
+		return fmt.Errorf("could not open file: %v", err)
 	}
 	defer file.Close()
 
 	extension := GetImageExtension(file)
 	if extension == "" {
-		return nil, fmt.Errorf("invalid image extension")
+		return fmt.Errorf("invalid image extension")
 	}
 
 	namespace := os.Getenv("BUCKET_NAMESPACE")
@@ -51,5 +52,10 @@ func CreateUploadRequest(fileHeader *multipart.FileHeader, path string) (*object
 		ContentLength: &fileHeader.Size,
 	}
 
-	return &request, nil
+	_, err = GetClient().PutObject(context.Background(), request)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"fmt"
 	"mime/multipart"
 
@@ -24,14 +23,7 @@ func PostHomePicture(ctx *gin.Context) {
 		return
 	}
 
-	request, err := utils.CreateUploadRequest(form.File, "")
-	if err != nil {
-		fmt.Println(err)
-		ctx.JSON(500, gin.H{"error": "Internal server error"})
-		return
-	}
-
-	_, err = utils.GetClient().PutObject(context.Background(), *request)
+	err := utils.UploadFile(form.File, "")
 	if err != nil {
 		fmt.Println(err)
 		ctx.JSON(500, gin.H{"error": "Internal server error"})
