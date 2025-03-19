@@ -1,11 +1,11 @@
 meta {
-  name: store
+  name: update
   type: http
-  seq: 1
+  seq: 4
 }
 
-post {
-  url: http://localhost:8080/home
+put {
+  url: http://localhost:8080/home/1
   body: json
   auth: bearer
 }
@@ -16,12 +16,7 @@ auth:bearer {
 
 body:json {
   {
-    "user_id": 1,
-    "address": "endereço 1",
-    "city": "cidade 1",
-    "description": "Casa top",
-    "cost_day": 10,
-    "restriction_id": 4,
-    "share_type_id": 1
+    "cost_day": 15,
+    "restriction_id": 4
   }
 }
