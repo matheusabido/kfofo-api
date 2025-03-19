@@ -29,7 +29,7 @@ func SetupRoutes() {
 
 	router.POST("/session", controllers.PostLogin)
 
-	router.POST("/upload", controllers.PostImage)
+	protected.POST("/home/picture", controllers.PostHomePicture)
 
 	router.Run()
 }

@@ -37,25 +37,23 @@ func AuthMiddleware(ctx *gin.Context) {
 	claims := &JWTClaims{}
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			ctx.Abort()
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 
 		secret := []byte(os.Getenv("JWT_SIGN"))
 		return secret, nil
 	})
-
 	if err != nil {
-		ctx.Abort()
 		ctx.JSON(401, gin.H{"error": "Unauthorized"})
+		ctx.Abort()
 		return
 	}
 
 	var user User
 	err = db.Instance.QueryRow(context.Background(), "SELECT id, name, email, birth_date, password FROM users WHERE id = $1", claims.Id).Scan(&user.Id, &user.Name, &user.Email, &user.BirthDate, &user.Password)
 	if err != nil {
-		ctx.Abort()
 		ctx.JSON(401, gin.H{"error": "Unauthorized"})
+		ctx.Abort()
 		return
 	}
 
