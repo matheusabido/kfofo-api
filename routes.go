@@ -9,6 +9,7 @@ import (
 )
 
 func SetupRoutes() {
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.MaxMultipartMemory = 2 * 1024 * 1024
 	validator.SetupValidator()
