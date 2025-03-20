@@ -18,7 +18,7 @@ func GetBookings(ctx *gin.Context) {
 		SELECT b.id, b.home_id, b.from_date, b.to_date, b.cost_per_cycle, h.address, h.city, h.picture_path
 		FROM bookings b
 		INNER JOIN homes h ON h.id = b.home_id
-		WHERE user_id = $1
+		WHERE b.user_id = $1
 		ORDER BY id DESC
 	`
 	rows, err := db.Instance.Query(context.Background(), query, user.Id)
@@ -56,78 +56,6 @@ func GetBookings(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, bookings)
-}
-
-func GetBooking(ctx *gin.Context) {
-	bookingIdStr := ctx.Param("id")
-	bookingId, err := strconv.Atoi(bookingIdStr)
-	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid booking id"})
-		return
-	}
-
-	user := utils.GetUser(ctx)
-
-	query := `
-		SELECT b.user_id, b.id, b.home_id, b.from_date, b.to_date, b.payment_type, b.cost_per_cycle,
-		       h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month,
-		       h.restriction_id, r.name, r.description,
-		       h.share_type_id, s.name, s.description
-		FROM bookings b
-		INNER JOIN homes h ON b.home_id = h.id
-		INNER JOIN restrictions r ON h.restriction_id = r.id
-		INNER JOIN share_types s ON h.share_type_id = s.id
-		WHERE b.id = $1
-	`
-	row := db.Instance.QueryRow(context.Background(), query, bookingId)
-
-	var ownerId, id, homeId, paymentType int
-	var fromDate, toDate time.Time
-	var costPerCycle float64
-	var address, city, homeDescription string
-	var costDay, costWeek, costMonth float64
-	var restrictionId, shareTypeId int
-	var restrictionName, restrictionDesc, shareName, shareDesc string
-
-	err = row.Scan(&ownerId, &id, &homeId, &fromDate, &toDate, &paymentType, &costPerCycle,
-		&address, &city, &homeDescription, &costDay, &costWeek, &costMonth,
-		&restrictionId, &restrictionName, &restrictionDesc,
-		&shareTypeId, &shareName, &shareDesc)
-	if err != nil {
-		fmt.Println(err)
-		ctx.JSON(404, gin.H{"error": "Booking not found"})
-		return
-	}
-
-	if ownerId != user.Id {
-		ctx.JSON(403, gin.H{"error": "Você não tem permissão para visualizar este booking"})
-		return
-	}
-
-	ctx.JSON(200, gin.H{
-		"booking": gin.H{
-			"id":             id,
-			"home_id":        homeId,
-			"from_date":      fromDate.Format("2006-01-02"),
-			"to_date":        toDate.Format("2006-01-02"),
-			"payment_type":   paymentType,
-			"cost_per_cycle": costPerCycle,
-		},
-		"home": gin.H{
-			"address":                 address,
-			"city":                    city,
-			"description":             homeDescription,
-			"cost_day":                costDay,
-			"cost_week":               costWeek,
-			"cost_month":              costMonth,
-			"restriction_id":          restrictionId,
-			"restriction_name":        restrictionName,
-			"restriction_description": restrictionDesc,
-			"share_type_id":           shareTypeId,
-			"share_type_name":         shareName,
-			"share_type_description":  shareDesc,
-		},
-	})
 }
 
 type StoreBookingDTO struct {
