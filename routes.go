@@ -29,6 +29,7 @@ func SetupRoutes() {
 
 	router.POST("/session", controllers.PostLogin)
 
+	router.GET("/home/picture", controllers.GetHomePicture)
 	protected.POST("/home/picture", controllers.PostHomePicture)
 
 	router.Run()

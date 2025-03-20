@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -28,21 +29,44 @@ func GetImageExtension(file multipart.File) string {
 	return allowedTypes[contentType]
 }
 
-func UploadFile(fileHeader *multipart.FileHeader, path string) error {
+func GetFile(path string) ([]byte, error) {
+	namespace := os.Getenv("BUCKET_NAMESPACE")
+	bucket := os.Getenv("BUCKET_NAME")
+	request := objectstorage.GetObjectRequest{
+		NamespaceName: &namespace,
+		BucketName:    &bucket,
+		ObjectName:    &path,
+	}
+
+	response, err := GetClient().GetObject(context.Background(), request)
+	if err != nil {
+		return nil, fmt.Errorf("could not get object: %v", err)
+	}
+
+	buf := new(bytes.Buffer)
+	_, err = buf.ReadFrom(response.Content)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read content from object on OCI : %v", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func UploadFile(fileHeader *multipart.FileHeader, path string) (error, string) {
 	file, err := fileHeader.Open()
 	if err != nil {
-		return fmt.Errorf("could not open file: %v", err)
+		return fmt.Errorf("could not open file: %v", err), ""
 	}
 	defer file.Close()
 
 	extension := GetImageExtension(file)
 	if extension == "" {
-		return fmt.Errorf("invalid image extension")
+		return fmt.Errorf("invalid image extension"), ""
 	}
 
 	namespace := os.Getenv("BUCKET_NAMESPACE")
 	bucket := os.Getenv("BUCKET_NAME")
-	objectName := path + "/" + uuid.New().String() + extension
+	objectName := path + uuid.New().String() + extension
 
 	request := objectstorage.PutObjectRequest{
 		NamespaceName: &namespace,
@@ -54,8 +78,8 @@ func UploadFile(fileHeader *multipart.FileHeader, path string) error {
 
 	_, err = GetClient().PutObject(context.Background(), request)
 	if err != nil {
-		return err
+		return err, ""
 	}
 
-	return nil
+	return nil, objectName
 }

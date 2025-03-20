@@ -41,7 +41,7 @@ func GetHomes(ctx *gin.Context) {
 	}()
 
 	go func() {
-		query := "SELECT h.id, h.user_id, u.name as user_name, h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month, h.restriction_id, r.name as restriction_name, r.description as restriction_description, h.share_type_id, s.name as share_name, s.description as share_description FROM homes h INNER JOIN users u ON h.user_id = u.id INNER JOIN restrictions r ON h.restriction_id = r.id INNER JOIN share_types s ON h.share_type_id = s.id ORDER BY h.id DESC LIMIT $1 OFFSET $2"
+		query := "SELECT h.id, h.picture_path, h.user_id, u.name as user_name, h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month, h.restriction_id, r.name as restriction_name, r.description as restriction_description, h.share_type_id, s.name as share_name, s.description as share_description FROM homes h INNER JOIN users u ON h.user_id = u.id INNER JOIN restrictions r ON h.restriction_id = r.id INNER JOIN share_types s ON h.share_type_id = s.id ORDER BY h.id DESC LIMIT $1 OFFSET $2"
 		rows, err := db.Instance.Query(context.Background(), query, pageSize, offset)
 		if err != nil {
 			fmt.Println(err)
@@ -54,6 +54,7 @@ func GetHomes(ctx *gin.Context) {
 		homes := make([]gin.H, 0, pageSize)
 		for rows.Next() {
 			var homeId int
+			var picturePath string
 			var userId int
 			var userName string
 			var address string
@@ -69,7 +70,7 @@ func GetHomes(ctx *gin.Context) {
 			var shareName string
 			var shareDesc string
 
-			err = rows.Scan(&homeId, &userId, &userName, &address, &city, &description,
+			err = rows.Scan(&homeId, &picturePath, &userId, &userName, &address, &city, &description,
 				&costDay, &costWeek, &costMonth, &restrictionId, &restrictionName, &restrictionDesc,
 				&shareTypeId, &shareName, &shareDesc)
 			if err != nil {
@@ -80,6 +81,7 @@ func GetHomes(ctx *gin.Context) {
 
 			homeData := gin.H{
 				"id":                      homeId,
+				"picture_path":            picturePath,
 				"user_id":                 userId,
 				"user_name":               userName,
 				"address":                 address,
@@ -122,7 +124,7 @@ func GetHome(ctx *gin.Context) {
 	}
 
 	query := `
-		SELECT h.id, h.user_id, u.name, h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month,
+		SELECT h.id, h.picture_path, h.user_id, u.name, h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month,
 			   h.restriction_id, r.name, r.description, r.icon,
 			   h.share_type_id, s.name, s.description, s.icon
 		FROM homes h
@@ -134,6 +136,7 @@ func GetHome(ctx *gin.Context) {
 	row := db.Instance.QueryRow(context.Background(), query, id)
 
 	var homeId int
+	var picturePath string
 	var userId int
 	var userName string
 	var address string
@@ -150,7 +153,7 @@ func GetHome(ctx *gin.Context) {
 	var shareName string
 	var shareDesc string
 	var shareIcon string
-	err = row.Scan(&homeId, &userId, &userName, &address, &city, &description, &costDay, &costWeek, &costMonth,
+	err = row.Scan(&homeId, &picturePath, &userId, &userName, &address, &city, &description, &costDay, &costWeek, &costMonth,
 		&restrictionId, &restrictionName, &restrictionDesc, &restrictionIcon,
 		&shareTypeId, &shareName, &shareDesc, &shareIcon)
 
@@ -162,6 +165,7 @@ func GetHome(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{
 		"id":                      homeId,
+		"picture_path":            picturePath,
 		"user_id":                 userId,
 		"user_name":               userName,
 		"address":                 address,
