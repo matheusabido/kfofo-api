@@ -32,6 +32,9 @@ func SetupRoutes() {
 	router.GET("/home/picture", controllers.GetHomePicture)
 	protected.POST("/home/picture", controllers.PostHomePicture)
 
+	router.GET("/utensils", controllers.GetUtensils)
+	protected.PUT("/utensils", controllers.UpdateUtensils)
+
 	router.Run()
 }
 

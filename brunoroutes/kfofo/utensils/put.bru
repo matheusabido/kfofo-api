@@ -1,0 +1,22 @@
+meta {
+  name: put
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://localhost:8080/utensils
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZXhwIjoxNzQyNDg3NzM4LCJpYXQiOjE3NDI0ODQxMzh9.97u-bZWP67AN8VNsmXM9VSLm8neFHpWuPAFgHdSQzFU
+}
+
+body:json {
+  {
+    "home_id": 1,
+    "utensil_ids": [1,2,3]
+  }
+}
