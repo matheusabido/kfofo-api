@@ -57,7 +57,7 @@ func GetUtensils(ctx *gin.Context) {
 		utensils = append(utensils, gin.H{"id": id, "name": name})
 	}
 
-	ctx.JSON(200, gin.H{"data": utensils})
+	ctx.JSON(200, utensils)
 }
 
 type UpdateUtensilsDTO struct {
