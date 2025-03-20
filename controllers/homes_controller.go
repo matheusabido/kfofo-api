@@ -14,6 +14,8 @@ import (
 )
 
 func GetHomes(ctx *gin.Context) {
+	queryUser, _ := ctx.GetQuery("user")
+
 	pageStr := ctx.DefaultQuery("page", "1")
 	pageSize := 20
 
@@ -23,6 +25,22 @@ func GetHomes(ctx *gin.Context) {
 		return
 	}
 
+	whereString := ""
+	var whereValues []any
+	var allValues []any
+	index := 1
+	if queryUser != "" {
+		whereString = " WHERE user_id = $1"
+		queryUserId, err := strconv.Atoi(queryUser)
+		if err != nil {
+			ctx.JSON(400, gin.H{"error": "Invalid user"})
+			return
+		}
+		whereValues = append(whereValues, queryUserId)
+		allValues = append(allValues, queryUserId)
+		index++
+	}
+
 	offset := (page - 1) * pageSize
 
 	totalChan := make(chan int)
@@ -30,7 +48,7 @@ func GetHomes(ctx *gin.Context) {
 
 	go func() {
 		var total int
-		err = db.Instance.QueryRow(context.Background(), "SELECT COUNT(*) as total FROM homes").Scan(&total)
+		err = db.Instance.QueryRow(context.Background(), "SELECT COUNT(*) as total FROM homes"+whereString, whereValues...).Scan(&total)
 		if err != nil {
 			fmt.Println(err)
 			ctx.JSON(500, gin.H{"error": "Internal server error"})
@@ -40,9 +58,13 @@ func GetHomes(ctx *gin.Context) {
 		totalChan <- total
 	}()
 
+	allValues = append(allValues, pageSize)
+	allValues = append(allValues, offset)
+
 	go func() {
-		query := "SELECT h.id, h.picture_path, h.user_id, u.name as user_name, h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month, h.restriction_id, r.name as restriction_name, r.description as restriction_description, h.share_type_id, s.name as share_name, s.description as share_description FROM homes h INNER JOIN users u ON h.user_id = u.id INNER JOIN restrictions r ON h.restriction_id = r.id INNER JOIN share_types s ON h.share_type_id = s.id ORDER BY h.id DESC LIMIT $1 OFFSET $2"
-		rows, err := db.Instance.Query(context.Background(), query, pageSize, offset)
+		query := "SELECT h.id, h.picture_path, h.user_id, u.name as user_name, h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month, h.restriction_id, r.name as restriction_name, r.description as restriction_description, h.share_type_id, s.name as share_name, s.description as share_description FROM homes h INNER JOIN users u ON h.user_id = u.id INNER JOIN restrictions r ON h.restriction_id = r.id INNER JOIN share_types s ON h.share_type_id = s.id" + whereString + " ORDER BY h.id DESC LIMIT $" + strconv.Itoa(index) + " OFFSET $" + strconv.Itoa(index+1)
+		index += 2
+		rows, err := db.Instance.Query(context.Background(), query, allValues...)
 		if err != nil {
 			fmt.Println(err)
 			ctx.JSON(500, gin.H{"error": "Internal server error"})
