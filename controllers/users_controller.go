@@ -116,7 +116,6 @@ func PostUser(ctx *gin.Context) {
 
 type UpdateUserDTO struct {
 	Name        string `json:"name" validate:"omitempty,min=5"`
-	Email       string `json:"email" validate:"omitempty,email"`
 	BirthDate   string `json:"birth_date" validate:"omitempty,datetime=2006-01-02"`
 	NewPassword string `json:"new_password" validate:"omitempty,min=8"`
 	Password    string `json:"password" validate:"required,min=8"`
@@ -153,11 +152,6 @@ func PutUser(ctx *gin.Context) {
 	if len(data.Name) > 0 {
 		updates = append(updates, "name = $"+strconv.Itoa(index))
 		values = append(values, data.Name)
-		index++
-	}
-	if len(data.Email) > 0 {
-		updates = append(updates, "email = $"+strconv.Itoa(index))
-		values = append(values, data.Email)
 		index++
 	}
 	if len(data.BirthDate) > 0 {

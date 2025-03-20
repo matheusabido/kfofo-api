@@ -132,7 +132,7 @@ func GetHomes(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{
 		"total":    total,
-		"homes":    homes,
+		"data":     homes,
 		"lastPage": math.Ceil(float64(total) / float64(pageSize)),
 	})
 }
@@ -147,8 +147,8 @@ func GetHome(ctx *gin.Context) {
 
 	query := `
 		SELECT h.id, h.picture_path, h.user_id, u.name, h.address, h.city, h.description, h.cost_day, h.cost_week, h.cost_month,
-			   h.restriction_id, r.name, r.description, r.icon,
-			   h.share_type_id, s.name, s.description, s.icon
+			   h.restriction_id, r.name, r.description,
+			   h.share_type_id, s.name, s.description
 		FROM homes h
 		INNER JOIN users u ON h.user_id = u.id
 		INNER JOIN restrictions r ON h.restriction_id = r.id
@@ -170,14 +170,12 @@ func GetHome(ctx *gin.Context) {
 	var restrictionId int
 	var restrictionName string
 	var restrictionDesc string
-	var restrictionIcon string
 	var shareTypeId int
 	var shareName string
 	var shareDesc string
-	var shareIcon string
 	err = row.Scan(&homeId, &picturePath, &userId, &userName, &address, &city, &description, &costDay, &costWeek, &costMonth,
-		&restrictionId, &restrictionName, &restrictionDesc, &restrictionIcon,
-		&shareTypeId, &shareName, &shareDesc, &shareIcon)
+		&restrictionId, &restrictionName, &restrictionDesc,
+		&shareTypeId, &shareName, &shareDesc)
 
 	if err != nil {
 		fmt.Println(err)
@@ -199,11 +197,9 @@ func GetHome(ctx *gin.Context) {
 		"restriction_id":          restrictionId,
 		"restriction_name":        restrictionName,
 		"restriction_description": restrictionDesc,
-		"restriction_icon":        restrictionIcon,
 		"share_type_id":           shareTypeId,
 		"share_type_name":         shareName,
 		"share_type_description":  shareDesc,
-		"share_type_icon":         shareIcon,
 	})
 }
 
