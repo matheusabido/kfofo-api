@@ -35,6 +35,11 @@ func SetupRoutes() {
 	router.GET("/utensils", controllers.GetUtensils)
 	protected.PUT("/utensils", controllers.UpdateUtensils)
 
+	protected.GET("/bookings", controllers.GetBookings)
+	protected.GET("/bookings/:id", controllers.GetBooking)
+	protected.POST("/booking", controllers.PostBooking)
+	protected.DELETE("/booking", controllers.DeleteBooking)
+
 	router.Run()
 }
 
